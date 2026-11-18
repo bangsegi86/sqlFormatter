@@ -9,4 +9,5 @@ require('./alias.js');
 require('./plsql.js');
 require('./format.js');
 require('./ifblocks.js');
+require('./blocks.js');
 module.exports = globalThis.SQLF;

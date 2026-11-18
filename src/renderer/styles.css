@@ -257,3 +257,63 @@ dialog input { width: 100%; height: 36px; }
   .opts.collapsed .ortext { writing-mode: horizontal-tb; }
   .opts.collapsed .oricon { transform: rotate(90deg); }
 }
+
+/* ===== 결과 칸: 코드 / 구조 · 설명 전환 ===== */
+.mode { display: inline-flex; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; flex: 0 0 auto; }
+.mode button { border: 0; background: transparent; height: 26px; padding: 0 10px; font-size: 12px; color: var(--mute); cursor: pointer; }
+.mode button + button { border-left: 1px solid var(--line2); }
+.mode button:hover { color: var(--text); background: var(--hover); }
+.mode button[aria-pressed="true"] { background: var(--chip); color: var(--text); font-weight: 600; }
+
+/* 구조 · 설명 도구 막대 */
+.notesbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 5px 12px; border-bottom: 1px solid var(--line); background: #0f151c; font-size: 12px; color: var(--mute); }
+.notesbar[hidden] { display: none; }
+.notesbar .btn kbd { background: rgba(255, 255, 255, .08); font-size: 10px; padding: 0 4px; }
+.notesbar .btn.primary kbd { background: rgba(11, 15, 20, .16); }
+.notesbar .btn[aria-pressed="true"] { background: var(--chip); border-color: var(--accent); }
+.notesbar .btn[disabled] { opacity: .45; cursor: default; filter: none; }
+.nprog { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nbar { width: 80px; height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; }
+.nbar i { display: block; height: 100%; width: 0; background: var(--ok); }
+.nfind { width: 200px; min-width: 120px; flex: 0 1 200px; height: 26px; border-radius: 6px; border: 1px solid var(--line2); background: #171e27; padding: 0 8px; font-size: 12px; }
+.nfind:focus { border-color: var(--accent); outline: none; }
+.nfmt { height: 26px; border-radius: 6px; border: 1px solid var(--line2); background: #171e27; padding: 0 4px; font: 12px var(--mono); }
+
+/* 왼쪽 설명 칸 · 오른쪽 지도 */
+.outwrap.notes-on { flex-direction: row; }
+.outwrap.notes-on .ed { min-width: 0; }
+.ncol { position: relative; flex: 0 0 clamp(210px, 40%, 340px); overflow: hidden; background: #10161d; border-right: 1px solid var(--line); }
+.ncol[hidden], .nmap[hidden] { display: none; }
+.nc { position: absolute; left: 0; right: 0; top: 0; height: var(--nlh, 21px); display: flex; align-items: center; gap: 5px; padding-right: 6px; font-size: 11px; will-change: transform; }
+.nc:hover, .nc:focus-within { background: rgba(110, 168, 254, .07); }
+.nh { flex: 0 0 auto; width: 14px; text-align: center; color: var(--faint); cursor: grab; user-select: none; font-size: 13px; line-height: 1; touch-action: none; }
+.nh:hover { color: var(--text); }
+.nk { flex: 0 0 auto; font: 700 9.5px var(--mono); letter-spacing: .03em; padding: 0 4px; border-radius: 3px; background: var(--chip); color: #8fb8ff; cursor: pointer; line-height: 15px; }
+.nk.k-IF, .nk.k-CASE { color: #ffb38a; } .nk.k-LOOP { color: #c4a0ff; } .nk.k-TX { color: var(--ok); }
+.nk.k-SET, .nk.k-CALL, .nk.k-CTRL, .nk.k-CURSOR { color: var(--mute); } .nk.k-DECL, .nk.k-EXC, .nk.k-UNIT { color: var(--faint); }
+.nn { flex: 0 0 auto; font: 600 10.5px var(--mono); color: var(--faint); cursor: pointer; font-variant-numeric: tabular-nums; }
+.ni { flex: 1 1 auto; min-width: 0; height: calc(var(--nlh, 21px) - 3px); border: 1px solid transparent; border-radius: 4px; background: transparent; padding: 0 5px; font-size: 12px; color: var(--text); text-overflow: ellipsis; }
+.ni::placeholder { color: #55657a; }
+.nc.none .ni { border-color: #253140; border-style: dashed; }
+.nc.pend .ni { color: #9cc3ff; }
+.nc.has .ni { color: #a9d8b6; }
+.ni:hover { border-color: var(--line2); }
+.ni:focus { border-color: var(--accent); border-style: solid; background: var(--panel2); color: var(--text); outline: none; }
+.nm { flex: 0 0 auto; display: none; gap: 2px; }
+.nc:hover .nm, .nc:focus-within .nm { display: inline-flex; }
+.nb { width: 18px; height: 18px; padding: 0; border: 1px solid var(--line2); border-radius: 4px; background: #171e27; color: var(--mute); font-size: 10px; cursor: pointer; }
+.nb:hover { color: var(--text); border-color: var(--accent); }
+.nmap { position: relative; flex: 0 0 14px; background: var(--panel2); border-left: 1px solid var(--line); cursor: pointer; overflow: hidden; }
+.nmap i { position: absolute; right: 2px; min-height: 2px; border-radius: 1px; }
+.nmap i.has { background: var(--ok); opacity: .8; }
+.nmap i.pend { background: var(--accent); }
+.nmap i.none { background: #364354; }
+.nthumb { position: absolute; left: 0; right: 0; border: 1px solid rgba(230, 237, 243, .35); background: rgba(230, 237, 243, .07); border-radius: 2px; pointer-events: none; }
+.ndrop { position: absolute; left: 0; right: 14px; height: 2px; background: var(--accent); box-shadow: 0 0 0 2px rgba(110, 168, 254, .2); pointer-events: none; z-index: 5; }
+.ndrop.bad { background: var(--err); box-shadow: 0 0 0 2px rgba(255, 123, 114, .2); }
+.ndrop[hidden], .nghost[hidden] { display: none; }
+.nghost { position: absolute; left: 0; top: 0; z-index: 6; max-width: 280px; padding: 3px 8px; border-radius: 6px; background: #1d2a3b; border: 1px solid var(--accent); color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
+.outwrap.ndragging, .outwrap.ndragging * { cursor: grabbing !important; user-select: none; }
+/* 코드 칸: 아직 넣지 않은 설명 미리보기 줄 · 바뀔 예전 설명 줄 */
+.cm-ghostnote { padding: 0 16px 0 4px; white-space: pre; color: #9cc3ff; font-style: italic; background: repeating-linear-gradient(90deg, rgba(156, 195, 255, .08) 0 6px, transparent 6px 12px); }
+.cm-line.cm-oldnote { text-decoration: line-through; opacity: .5; }

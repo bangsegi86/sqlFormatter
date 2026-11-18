@@ -70,6 +70,10 @@
         <div class="phead">
           <h2>포맷 결과</h2>
           <span class="chip" id="outInfo">0줄</span>
+          <div class="mode" role="group" aria-label="결과 보기 방식">
+            <button type="button" id="mCode" aria-pressed="true" title="정리된 쿼리만 봐요">코드</button>
+            <button type="button" id="mNotes" aria-pressed="false" title="덩어리마다 설명을 달고, 끌어서 순서를 바꿔요. 설명은 주석으로 넣을 수 있어요">구조 · 설명</button>
+          </div>
           <span class="chip edited" id="editChip" hidden title="결과를 직접 고쳤어요. 복사 · 저장 · 원본으로는 고친 내용으로 해요. 옵션을 바꾸거나 다시 포맷하면 새 결과로 바뀌고, 알림의 [되돌리기]로 고친 내용을 되살릴 수 있어요">직접 수정함</span>
           <span class="chip stale" id="staleChip" hidden title="원본이 바뀌었는데 자동 포맷이 꺼져 있어요. [포맷 실행] 또는 Ctrl+Enter 로 다시 정리하세요">이전 결과</span>
           <div class="spacer"></div>
@@ -99,8 +103,25 @@
             찾기 · 바꾸기
           </button>
         </div>
+        <div class="notesbar" id="notesbar" hidden>
+          <span class="nprog" title="설명을 단 덩어리 수 (입력만 한 것 포함)"><span class="nbar"><i id="nProgBar"></i></span><span id="nProgText">설명 0 / 0</span></span>
+          <button type="button" class="btn xs" id="nNext" title="지금 위치 아래에서 설명이 없는 덩어리로 가서 바로 입력해요. 설명 칸에서 Enter 도 같아요">설명 없는 다음 <kbd>F8</kbd></button>
+          <input type="search" class="nfind" id="nFind" placeholder="덩어리 찾기 (설명 · 쿼리) Enter" aria-label="덩어리 찾기" spellcheck="false" autocomplete="off">
+          <button type="button" class="btn xs" id="nFold" aria-pressed="false" title="쿼리 본문을 접고 덩어리 첫 줄만 보여줘요. 멀리 옮길 때 편해요">덩어리만 보기</button>
+          <div class="spacer"></div>
+          <select class="nfmt" id="nFmt" aria-label="주석 모양" title="주석으로 넣을 때 모양. [번호]는 넣을 때마다 다시 매겨요">
+            <option value="dash">-- [1] 설명</option>
+            <option value="block">/* [1] 설명 */</option>
+            <option value="plain">-- 설명 (번호 없음)</option>
+          </select>
+          <button type="button" class="btn xs primary" id="nApply" title="입력한 설명을 덩어리 바로 위에 주석으로 넣어요. 알림의 [되돌리기] 또는 Ctrl+Z 로 취소해요">주석으로 넣기</button>
+        </div>
         <div class="outwrap" id="outwrap">
+          <div class="ncol" id="ncol" hidden aria-label="덩어리 설명"></div>
           <div class="ed" id="outEd"></div>
+          <div class="nmap" id="nmap" hidden title="전체 지도: 초록 = 설명 넣음 · 파랑 = 입력함(아직 주석 아님) · 회색 = 설명 없음. 누르면 그 위치로 가요"></div>
+          <div class="ndrop" id="ndrop" hidden></div>
+          <div class="nghost" id="nghost" hidden></div>
         </div>
       </section>
     </div>
@@ -184,9 +205,11 @@
 <script src="../engine/plsql.js"></script>
 <script src="../engine/format.js"></script>
 <script src="../engine/ifblocks.js"></script>
+<script src="../engine/blocks.js"></script>
 <script src="../vendor/codemirror.js"></script>
 <script src="samples.js"></script>
 <script src="editor.js"></script>
+<script src="notes.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -328,7 +328,9 @@
         }
       }
     }
-    return { rest: '', label: '⋯', title: '눌러서 펼치기' };
+    // 구조 · 설명 화면의 "덩어리만 보기"로 접은 곳: 접힌 줄 수
+    var n = st.sliceDoc(r.from, r.to).split('\n').length - 1;
+    return { rest: '', label: n ? '⋯ ' + n + '줄' : '⋯', title: '눌러서 펼치기' };
   }
   function placeholderDOM(view, onclick, info) {
     info = info || { rest: '', label: '⋯', title: '' };
@@ -400,6 +402,7 @@
         { key: 'Mod-Shift-[', run: foldHere },
         { key: 'Mod-Shift-]', run: unfoldHere }
       ]),
+      o.extra || [],
       C.EditorView.updateListener.of(function (u) {
         if (u.docChanged && !u.transactions.some(function (tr) { return tr.annotation(prog); })) o.onEdit();
         if (u.docChanged || u.selectionSet || u.focusChanged || foldChanged(u)) o.onCursor();

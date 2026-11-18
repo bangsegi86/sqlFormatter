@@ -64,6 +64,7 @@
   });
   var out = E.createResult($('outEd'), {
     label: '포맷된 SQL (직접 고칠 수 있어요)', tabSize: tabSize,
+    extra: window.SQLNotes.extension,
     placeholder: '왼쪽에 쿼리를 붙여넣으면 여기에 정리된 결과가 나와요. 결과는 여기서 바로 고칠 수 있어요.',
     onEdit: function () {
       if (!state.edited) setEdited(true);
@@ -101,6 +102,35 @@
     toastT = setTimeout(function () { t.classList.remove('show'); }, actionLabel ? 6000 : 2600);
   }
 
+  /* ---------- 구조 · 설명 화면 (notes.js) ---------- */
+  var notes = window.SQLNotes.attach(out, {
+    wrap: $('outwrap'), col: $('ncol'), map: $('nmap'), bar: $('notesbar'), drop: $('ndrop'), ghost: $('nghost'),
+    progBar: $('nProgBar'), progText: $('nProgText'), next: $('nNext'), findIn: $('nFind'), fold: $('nFold'), fmt: $('nFmt'), apply: $('nApply')
+  }, {
+    toast: function (m, l, a) { toast(m, l, a); },
+    store: function (k, v) { store.set(k, v); },
+    onScroll: function () { drawCrumb(); }
+  });
+  notes.setFmt(store.get('noteFmt', 'dash'));
+  function setNotesMode(on, quiet) {
+    $('mCode').setAttribute('aria-pressed', String(!on));
+    $('mNotes').setAttribute('aria-pressed', String(on));
+    store.set('notesMode', on);
+    // 결과 칸이 좁으면 설명 칸 자리를 만들려고 옵션 패널을 접어요 (끄면 다시 펼쳐요)
+    if (on && !state.optsHidden && $('paneR').clientWidth < 760) {
+      setOptsHidden(true);
+      state.notesHidOpts = true;
+      if (!quiet) toast('설명 칸 자리를 만들려고 옵션 패널을 접었어요. Ctrl+B 로 다시 열 수 있어요.');
+    } else if (!on && state.notesHidOpts) {
+      if (state.optsHidden) setOptsHidden(false);
+      state.notesHidOpts = false;
+    }
+    notes.setEnabled(on);
+    drawCrumb();
+  }
+  $('mCode').addEventListener('click', function () { setNotesMode(false); });
+  $('mNotes').addEventListener('click', function () { setNotesMode(true); });
+
   /* ---------- 포맷 실행 ---------- */
   function run() {
     clearTimeout(timer);
@@ -112,11 +142,14 @@
     var edited = state.edited ? out.value : null;
     // 원본이 같으면(옵션만 바꿈) 접힌 IF 를 그대로 접어 둬요
     var memo = state.foldSrc === text ? out.foldMemo() : null;
+    // 결과에 넣어 둔 설명 주석은 새 결과에서 "넣을 설명"으로 다시 보여줘요
+    var kept = edited !== null ? notes.harvest(edited) : 0;
     drawOutput(res, text, memo);
     state.foldSrc = text;
     if (edited !== null && edited !== out.value) {
-      toast('다시 정리해서 결과에 직접 고친 내용이 바뀌었어요.', '되돌리기', function () {
+      toast('다시 정리해서 결과에 직접 고친 내용이 바뀌었어요.' + (kept ? ' 넣어 둔 설명 ' + kept + '개는 [구조 · 설명]에 그대로 있어요.' : ''), '되돌리기', function () {
         out.setText(edited);
+        notes.afterSet();
         setEdited(true);
         drawLevels();
         $('outInfo').textContent = countLines(edited) + '줄';
@@ -153,6 +186,7 @@
   /* ---------- 결과 칸 ---------- */
   function drawOutput(res, text, memo) {
     out.setText(text.trim() ? res.text : '', memo);
+    notes.afterSet();
     setEdited(false);
     drawLevels();
   }
@@ -181,7 +215,7 @@
   }
   // 커서가 어느 IF 의 어느 가지 안에 있는지 (누르면 그 줄로 이동)
   function drawCrumb() {
-    var box = $('crumb'), items = out.crumbs();
+    var box = $('crumb'), items = notes && notes.on() ? notes.crumbs() : out.crumbs();
     box.textContent = '';
     if (!items.length) {
       if (out.ifCount()) box.appendChild(h('span', { class: 'lab', text: '현재 위치 · IF 문 밖' }));
@@ -747,6 +781,7 @@
       e.preventDefault();
       find.open($('find').contains(e.target) ? find.target() : edFor(e.target), k === 'h');
     }
+    else if (e.key === 'F8' && notes.on()) { e.preventDefault(); notes.nextEmpty(); }
     else if (e.key === 'F3') { e.preventDefault(); if (find.isOpen()) find.step(e.shiftKey ? -1 : 1); else find.open(edFor(e.target)); }
     else if (ctrl && e.key === 'Enter') { if ($('find').contains(e.target)) return; e.preventDefault(); run(); }
     else if (ctrl && e.shiftKey && k === 'c') { e.preventDefault(); copyResult(); }
@@ -792,7 +827,8 @@
   renderPresetSel();
   setOptsHidden(!!store.get('optsHidden', false));
   run();
+  if (store.get('notesMode', false)) setNotesMode(true, true);
   src.focus();
 
-  window.__app = { state: state, run: run, src: src, out: out, find: find }; // 점검·테스트용
+  window.__app = { state: state, run: run, src: src, out: out, find: find, notes: notes }; // 점검·테스트용
 })();
