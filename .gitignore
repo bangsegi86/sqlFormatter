@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# 회사 프로시저 원본 (테스트는 파일이 없으면 건너뛰어요)
+sample_proc.sql

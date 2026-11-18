@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oracle SQL 포매터</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="bar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#4F8CF7"/><path d="M8 10.5h16M12.5 16h9M8 21.5h12" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+      <h1>Oracle SQL 포매터</h1>
+    </div>
+    <div class="spacer"></div>
+    <button type="button" class="btn" id="btnOpen" title=".sql 파일을 원본 칸으로 불러와요 (Ctrl+O)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a1 1 0 0 1 1-1h3l2 2h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6z"/></svg>
+      파일 열기
+    </button>
+    <button type="button" class="btn" id="btnSample" title="누를 때마다 다른 예제 쿼리를 넣어요. 옵션을 바꿔 보며 결과를 확인할 때 써요">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h7l3 3v11H5z"/><path d="M8 10h4M8 13h4"/></svg>
+      예제 쿼리
+    </button>
+    <div class="fsz" role="group" aria-label="코드 글자 크기">
+      <button type="button" class="btn icon" id="btnSmaller" aria-label="코드 글자 작게" title="원본 · 결과 글자 작게">A−</button>
+      <button type="button" class="btn icon" id="btnBigger" aria-label="코드 글자 크게" title="원본 · 결과 글자 크게">A+</button>
+    </div>
+    <button type="button" class="btn primary" id="btnRun" title="원본을 지금 옵션으로 정리해요">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4l10 6-10 6z"/></svg>
+      포맷 실행
+      <kbd>Ctrl + Enter</kbd>
+    </button>
+    <input type="file" id="fileIn" accept=".sql,.txt,.pls,.pks,.pkb,.prc,.fnc,.trg,text/plain" hidden>
+    <input type="file" id="presetIn" accept=".json,application/json" hidden>
+  </header>
+
+  <main class="main">
+    <div class="split" id="split">
+
+      <section class="pane" id="paneL" aria-label="원본 쿼리">
+        <div class="phead">
+          <h2>원본 쿼리</h2>
+          <span class="chip" id="srcInfo">0줄 · 0자</span>
+          <div class="spacer"></div>
+          <button type="button" class="btn sm" id="btnPaste" title="원본 칸을 클립보드 내용으로 바꿔요">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="10" height="13" rx="1.5"/><path d="M8 4V3h4v1"/></svg>
+            붙여넣기
+          </button>
+          <button type="button" class="btn sm" id="btnClear" title="원본 칸을 비워요 (알림에서 되돌릴 수 있어요)">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h10M8 6V4h4v2M6 6l1 10h6l1-10"/></svg>
+            지우기
+          </button>
+        </div>
+        <div class="srcwrap" id="srcwrap">
+          <div class="ed" id="srcEd"></div>
+          <div class="dropmsg" id="dropmsg">.sql 파일을 놓으세요</div>
+        </div>
+        <div class="pfoot">
+          <button type="button" class="sw" id="swAuto" role="switch" aria-checked="true" aria-label="자동 포맷"><span></span></button>
+          <span><b>자동 포맷</b> · 입력하거나 붙여넣으면 바로 정리해요</span>
+        </div>
+      </section>
+
+      <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="좌우 폭 조절 (←, → 키로도 조절)"><i></i></div>
+
+      <section class="pane" id="paneR" aria-label="포맷 결과">
+        <div class="phead">
+          <h2>포맷 결과</h2>
+          <span class="chip" id="outInfo">0줄</span>
+          <span class="chip edited" id="editChip" hidden title="결과를 직접 고쳤어요. 복사 · 저장 · 원본으로는 고친 내용으로 해요. 옵션을 바꾸거나 다시 포맷하면 새 결과로 바뀌고, 알림의 [되돌리기]로 고친 내용을 되살릴 수 있어요">직접 수정함</span>
+          <span class="chip stale" id="staleChip" hidden title="원본이 바뀌었는데 자동 포맷이 꺼져 있어요. [포맷 실행] 또는 Ctrl+Enter 로 다시 정리하세요">이전 결과</span>
+          <div class="spacer"></div>
+          <button type="button" class="btn sm" id="btnToSrc" title="결과를 왼쪽 원본 칸에 넣어요. 결과를 직접 손보거나 다른 옵션으로 다시 정리할 때 써요">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10H4m4-4l-4 4 4 4"/></svg>
+            원본으로
+          </button>
+          <button type="button" class="btn sm" id="btnSave" title="결과를 .sql 파일로 저장해요 (Ctrl+S)">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 16h12"/></svg>
+            .sql 저장
+          </button>
+          <button type="button" class="btn sm primary" id="btnCopy" title="결과를 클립보드에 복사해요 (Ctrl+Shift+C)">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1.5"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4h-6A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7"/></svg>
+            복사
+          </button>
+        </div>
+        <div class="notes" id="notes" hidden></div>
+        <div class="foldbar" id="foldbar">
+          <span class="lvwrap" id="lvwrap" hidden>
+            <span class="lvlab" title="엑셀 그룹처럼 단계 번호로 IF 를 한 번에 접고 펴요. 1 = 전체 접기, 마지막 번호 = 전체 펼치기">IF 단계</span>
+            <span class="lvs" id="lvs"></span>
+          </span>
+          <nav class="crumb" id="crumb" aria-label="현재 위치"></nav>
+          <div class="spacer"></div>
+          <button type="button" class="btn xs" id="btnFind" title="찾기 (Ctrl+F) · 바꾸기 (Ctrl+H). 원본 칸에서 누르면 원본에서 찾아요">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5"/><path d="M12.5 12.5L17 17"/></svg>
+            찾기 · 바꾸기
+          </button>
+        </div>
+        <div class="outwrap" id="outwrap">
+          <div class="ed" id="outEd"></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="opts" id="opts" aria-label="포맷 옵션">
+      <!-- 접힌 상태에서만 보이는 세로 띠: 누르면 다시 펼쳐요 -->
+      <button type="button" class="orail" id="optsRail" title="옵션 패널 펼치기 (Ctrl+B)" aria-label="옵션 패널 펼치기" aria-controls="opts">
+        <span class="oricon" aria-hidden="true">«</span>
+        <span class="ortext">포맷 옵션</span>
+      </button>
+      <div class="ohead">
+        <div class="otitle">
+          <button type="button" class="ohide" id="btnOptsHide" title="옵션 패널 접기 — 원본 · 결과 칸이 넓어져요 (Ctrl+B)" aria-label="옵션 패널 접기" aria-controls="opts" aria-expanded="true">»</button>
+          <h2>포맷 옵션</h2>
+        </div>
+        <div class="spacer"></div>
+        <label class="presetsel">
+          <span>프리셋</span>
+          <select id="presetSel" aria-label="프리셋 선택"></select>
+        </label>
+      </div>
+      <div class="tabs" id="tabs" role="tablist" aria-label="옵션 분류"></div>
+      <div class="obody" id="obody"></div>
+      <div class="ofoot">
+        <button type="button" class="btn" id="btnReset" title="모든 옵션을 기본값으로 되돌려요 (알림에서 되돌릴 수 있어요)">옵션 초기화</button>
+        <button type="button" class="btn" id="btnSavePreset" title="지금 옵션을 프리셋으로 저장하거나 기존 프리셋에 덮어써요">프리셋 저장</button>
+        <button type="button" class="btn icon" id="btnPresetMenu" aria-label="프리셋 관리" title="프리셋 내보내기 · 가져오기 · 삭제">⋯</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="status" id="status" role="status"></footer>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form method="dialog" id="dlgForm">
+    <h3 id="dlgTitle">프리셋 저장</h3>
+    <p id="dlgText">지금 옵션을 이 이름으로 저장해요.</p>
+    <input type="text" id="dlgInput" maxlength="40" autocomplete="off" aria-label="프리셋 이름">
+    <div class="dlgchips" id="dlgChips" hidden></div>
+    <div class="dlgbtns">
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="dlgCancel">취소</button>
+      <button type="submit" class="btn primary" id="dlgOk">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="menu" id="presetMenu" hidden>
+  <button type="button" id="mExport" title="내 프리셋을 .json 파일로 저장해요. 팀원에게 나눠 줄 때 써요">프리셋 내보내기 (.json)</button>
+  <button type="button" id="mImport" title="받은 .json 파일의 프리셋을 추가해요. 같은 이름은 덮어써요">프리셋 가져오기 (.json)</button>
+  <button type="button" id="mDelete">지금 프리셋 삭제</button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 찾기 · 바꾸기 막대: Ctrl+F 를 누른 칸(원본/결과) 오른쪽 위로 옮겨 붙여요 -->
+<div class="find" id="find" role="search" aria-label="찾기 · 바꾸기" hidden>
+  <button type="button" class="rt" id="fRepToggle" aria-expanded="false" title="바꾸기 줄 열기/닫기 (Ctrl+H)">▸</button>
+  <div class="frow">
+    <input id="fq" type="text" placeholder="찾기" aria-label="찾을 내용" spellcheck="false" autocomplete="off">
+    <button type="button" class="ib" id="fCase" aria-pressed="false" title="대소문자 구분">Aa</button>
+    <button type="button" class="ib" id="fWord" aria-pressed="false" title="단어 단위로만 찾기 (V_CNT 로 V_CNT2 는 안 찾아요)">단어</button>
+    <span class="cnt" id="fCnt"></span>
+    <button type="button" class="ib" id="fPrev" title="이전 (Shift+Enter)">↑</button>
+    <button type="button" class="ib" id="fNext" title="다음 (Enter · F3)">↓</button>
+    <button type="button" class="ib" id="fClose" title="닫기 (Esc)">✕</button>
+  </div>
+  <div class="frow" id="fRepRow" hidden>
+    <input id="fr" type="text" placeholder="바꿀 내용" aria-label="바꿀 내용" spellcheck="false" autocomplete="off">
+    <button type="button" class="ib" id="fRep" title="지금 위치만 바꾸고 다음으로 (Enter)">바꾸기</button>
+    <button type="button" class="ib" id="fRepAll" title="모두 바꾸기 (Ctrl+Enter) — Ctrl+Z 한 번으로 되돌려요">모두 바꾸기</button>
+  </div>
+</div>
+<script src="../engine/options.js"></script>
+<script src="../engine/tokenizer.js"></script>
+<script src="../engine/parser.js"></script>
+<script src="../engine/render.js"></script>
+<script src="../engine/transform.js"></script>
+<script src="../engine/alias.js"></script>
+<script src="../engine/plsql.js"></script>
+<script src="../engine/format.js"></script>
+<script src="../engine/ifblocks.js"></script>
+<script src="../vendor/codemirror.js"></script>
+<script src="samples.js"></script>
+<script src="editor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

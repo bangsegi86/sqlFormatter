@@ -1,0 +1,8 @@
+/* "샘플 불러오기"에서 돌려가며 보여주는 예시 쿼리 */
+window.SQL_SAMPLES = [
+  "select a.emp_no,a.emp_nm,b.dept_nm,decode(a.gender,'M','Male','F','Female','Other') gender_nm,case when a.sal>=5000 then 'HIGH' when a.sal>=3000 then 'MID' else 'LOW' end sal_grade,(select count(*) from tb_order o where o.emp_no=a.emp_no and o.ord_dt>=trunc(sysdate,'MM')) ord_cnt,nvl(c.bonus,0) bonus from tb_emp a,tb_dept b,(select emp_no,sum(bonus_amt) bonus from tb_bonus where yy='2026' group by emp_no) c where a.dept_no=b.dept_no and a.emp_no=c.emp_no(+) and a.use_yn='Y' and b.dept_no in (select dept_no from tb_dept_auth where user_id=:user_id) order by a.emp_no",
+
+  "-- 부서별 월 매출 집계\nwith m as (select dept_no, to_char(ord_dt,'YYYYMM') ym, sum(amt) amt, count(*) cnt from tb_order where ord_dt>=add_months(trunc(sysdate,'MM'),-11) group by dept_no, to_char(ord_dt,'YYYYMM')) select d.dept_nm, m.ym, m.amt, m.cnt, round(ratio_to_report(m.amt) over (partition by m.ym)*100,1) pct, rank() over (partition by m.ym order by m.amt desc) rk from m inner join tb_dept d on d.dept_no=m.dept_no left join tb_dept_ext x on x.dept_no=d.dept_no and x.use_yn='Y' where m.amt>0 and (d.dept_nm like '%영업%' or d.dept_nm like '%마케팅%') order by m.ym desc, rk",
+
+  "merge into tb_emp_sum t using (select emp_no, sum(amt) amt from tb_order where ord_dt>=trunc(sysdate) group by emp_no) s on (t.emp_no=s.emp_no) when matched then update set t.amt=s.amt, t.upd_dt=sysdate when not matched then insert (emp_no, amt, reg_dt) values (s.emp_no, s.amt, sysdate);\nupdate tb_emp a set a.sal=a.sal*1.05, a.upd_dt=sysdate where a.use_yn='Y' and exists (select 1 from tb_perf p where p.emp_no=a.emp_no and p.grade in ('A','B'));\ndelete from tb_log where reg_dt<sysdate-90"
+];
