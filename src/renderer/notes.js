@@ -16,6 +16,23 @@
   var setRefresh = C.StateEffect.define();
   var setHl = C.StateEffect.define();
 
+  // 덩어리 종류 표시(LOOP · BLOCK …)에 마우스를 올리면 나오는 뜻
+  var KIND_TIP = {
+    UNIT: '전체 — 프로시저 · 함수 · 패키지 자체',
+    PROC: 'PROC — 패키지 안의 프로시저 · 함수 하나',
+    DECL: 'DECL — 선언부 (변수 · 커서 · 타입 선언 묶음)',
+    BLOCK: 'BLOCK — 안쪽 BEGIN ~ END 또는 DECLARE ~ END 블록',
+    IF: 'IF — IF ~ END IF 조건 분기 전체',
+    CASE: 'CASE — CASE ~ END CASE 분기 전체',
+    LOOP: 'LOOP — 반복문 전체 (FOR · WHILE · LOOP ~ END LOOP)',
+    SQL: 'SQL — SQL 문장 하나 (SELECT INTO · INSERT · UPDATE · DELETE · MERGE · OPEN … FOR)',
+    CURSOR: 'CURSOR — 커서 명령 (OPEN · FETCH · CLOSE)',
+    SET: 'SET — 대입문 (:=). 빈 줄 없이 붙은 대입문은 한 덩어리로 묶어요',
+    CALL: 'CALL — 프로시저 호출',
+    TX: 'TX — 트랜잭션 (COMMIT · ROLLBACK · SAVEPOINT)',
+    CTRL: 'CTRL — 흐름 제어 (RETURN · EXIT · RAISE · NULL)',
+    EXC: 'EXC — EXCEPTION (오류 처리) 부분'
+  };
   function cut(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
   function descOf(b) { return Object.prototype.hasOwnProperty.call(pending, b.key) ? pending[b.key] : (b.saved || ''); }
   function isPending(b) { return Object.prototype.hasOwnProperty.call(pending, b.key) && pending[b.key].trim() !== (b.saved || ''); }
@@ -117,6 +134,8 @@
       c.style.paddingLeft = (4 + Math.min(depthOf(b, i), 8) * 10) + 'px';
       c.querySelector('.nk').textContent = b.kind === 'UNIT' ? '전체' : b.kind;
       c.querySelector('.nk').className = 'nk k-' + b.kind;
+      c.querySelector('.nk').title = (KIND_TIP[b.kind] || b.kind) + '\n누르면 그 줄로 가요';
+      c.querySelector('.nn').title = (b.num ? b.num + '번' : '전체') + ' · 점(.) 하나마다 한 단계 안쪽이에요 (6.1 = 6번 안의 첫째)';
       c.querySelector('.nn').textContent = b.num;
       c.querySelector('.nh').style.visibility = mv ? '' : 'hidden';
       c.querySelector('.nm').style.display = mv ? '' : 'none';
