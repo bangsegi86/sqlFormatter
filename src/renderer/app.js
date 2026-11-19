@@ -43,8 +43,7 @@
     aliasRows: [],
     aliasKey: null,
     res: null,
-    fileName: null,
-    sample: 0
+    fileName: null
   };
 
   var timer = null;
@@ -646,11 +645,6 @@
   $('btnRun').addEventListener('click', run);
   $('btnOpen').addEventListener('click', openFile);
   $('fileIn').addEventListener('change', function (e) { if (e.target.files[0]) loadFile(e.target.files[0]); });
-  $('btnSample').addEventListener('click', function () {
-    var n = window.SQL_SAMPLES.length, i = state.sample % n;
-    state.sample++;
-    replaceSource(window.SQL_SAMPLES[i], null, '예제 ' + (i + 1) + '/' + n + ' 을 넣었어요. 다시 누르면 다른 예제가 나와요.');
-  });
   $('btnClear').addEventListener('click', function () {
     if (!src.value) { src.focus(); return; }
     replaceSource('', null, '원본을 지웠어요.');
