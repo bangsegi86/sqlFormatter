@@ -77,14 +77,16 @@
   function attach(out, el, o) {
     var view = function () { return out.view; };
     var cards = {};          // key → 카드 DOM
-    var raf = 0, mapDirty = true, wantFocus = null, foldOn = false, drag = null;
+    var raf = 0, mapDirty = true, wantFocus = null, foldOn = false, drag = null, maxLv = o.level || 0; // maxLv: 보여줄 카드 단계 (0 = 전체)
     var undoCmd = (C.historyKeymap.filter(function (k) { return k.key === 'Mod-z'; })[0] || {}).run;
 
     function info() { var f = view().state.field(field, false); return f && f.info; }
     function find(key) { var i = info(); return i ? i.flat.filter(function (b) { return b.key === key; })[0] : null; }
     function lineTop(ln) { var v = view(); return v.lineBlockAt(v.state.doc.line(Math.min(ln + 1, v.state.doc.lines)).from).top; }
     function lineBottom(ln) { var v = view(); return v.lineBlockAt(v.state.doc.line(Math.min(ln + 1, v.state.doc.lines)).from).bottom; }
-    function segEnd(b) { return b.kids.length ? Math.max(b.start, b.kids[0].lead - 1) : b.end; }
+    // 카드가 붙어 있는 범위: 안쪽 덩어리 카드가 보이면 그 앞까지, 안 보이면 덩어리 끝까지
+    function segEnd(b) { var i = info(); return b.kids.length && shown(b.kids[0], i) ? Math.max(b.start, b.kids[0].lead - 1) : b.end; }
+    function shown(b, i) { return !maxLv || depthOf(b, i) < maxLv; }
     function hidden(b) {
       var v = view(), pos = v.state.doc.line(b.start + 1).from, h = false;
       C.foldedRanges(v.state).between(pos, pos, function (a, z) { if (a < pos && z >= pos) h = true; });
@@ -119,7 +121,7 @@
       c.querySelector('.nh').style.visibility = mv ? '' : 'hidden';
       c.querySelector('.nm').style.display = mv ? '' : 'none';
       if (document.activeElement !== inp && inp.value !== d) inp.value = d;
-      inp.placeholder = b.kind === 'UNIT' ? '이 프로시저 전체 설명' : cut(b.label, 40) + ' (' + (b.end - b.lead + 1) + '줄)';
+      inp.placeholder = b.kind === 'UNIT' ? '프로시저 전체 설명' : '설명 입력 · ' + (b.end - b.start + 1) + '줄';
       inp.title = (d ? d + '\n' : '') + (b.num ? b.num + ' · ' : '') + b.label + ' · ' + (b.start + 1) + '~' + (b.end + 1) + '번째 줄';
       inp.setAttribute('aria-label', (b.num || '전체') + '번 덩어리 설명');
     }
@@ -135,16 +137,25 @@
         el.col.style.setProperty('--nlh', lh + 'px');
         var focusKey = document.activeElement && el.col.contains(document.activeElement) ? (document.activeElement.closest('.nc') || {}).dataset : null;
         focusKey = focusKey ? focusKey.key : null;
+        var rows = [];
         i.flat.forEach(function (b) {
+          if (!shown(b, i)) return;
           var top = lineTop(b.lead), bot = lineBottom(segEnd(b));
           var vis = bot > visTop && top < visBot && !hidden(b);
           if (!vis && b.key !== focusKey && b.key !== wantFocus) return;
           var c = card(b);
           fill(c, b, i);
-          var y = Math.max(top, Math.min(visTop, bot - lh));
-          c.style.transform = 'translateY(' + Math.round(y - visTop) + 'px)';
-          c.style.visibility = vis ? '' : 'hidden';
+          rows.push({ c: c, vis: vis, y: Math.max(top, Math.min(visTop, bot - lh)) });
           used[b.key] = 1;
+        });
+        // 카드끼리 겹치지 않게: 앞 카드 바로 아래보다 위로 오면 한 줄 내려요
+        var prev = -1e9;
+        rows.forEach(function (r) {
+          if (!r.vis) { r.c.style.visibility = 'hidden'; return; }
+          var y = Math.max(r.y, prev + lh);
+          prev = y;
+          r.c.style.transform = 'translateY(' + Math.round(y - visTop) + 'px)';
+          r.c.style.visibility = '';
         });
       }
       Object.keys(cards).forEach(function (k) { if (!used[k]) { cards[k].remove(); delete cards[k]; } });
@@ -160,7 +171,7 @@
       mapDirty = false;
       var v = view(), i = info(), H = el.map.clientHeight, total = Math.max(1, v.contentHeight), html = [];
       if (i) i.flat.forEach(function (b) {
-        if (hidden(b)) return;
+        if (hidden(b) || !shown(b, i)) return;
         var t = lineTop(b.lead), e = lineBottom(segEnd(b));
         html.push('<i class="' + stateOf(b) + '" data-k="' + encodeURIComponent(b.key) + '" style="top:' + (t / total * H).toFixed(1) + 'px;height:' + Math.max(2, (e - t) / total * H - 1).toFixed(1) + 'px;left:' + (3 + Math.min(depthOf(b, i), 3) * 2) + 'px"></i>');
       });
@@ -203,7 +214,7 @@
     function topBlock() {
       var v = view(), i = info(); if (!i) return -1;
       var y = el.col.getBoundingClientRect().top - v.documentTop + 4, best = -1;
-      i.flat.forEach(function (b, k) { if (lineTop(b.lead) <= y && !hidden(b)) best = k; });
+      i.flat.forEach(function (b, k) { if (lineTop(b.lead) <= y && !hidden(b) && shown(b, i)) best = k; });
       return best;
     }
     function goTo(b, focus) {
@@ -222,7 +233,7 @@
       var from = cur ? i.flat.map(function (b) { return b.key; }).indexOf(cur.dataset.key) + 1 : topBlock() + 1;
       for (var k = 0; k < i.flat.length; k++) {
         var b = i.flat[(Math.max(0, from) + k) % i.flat.length];
-        if (!descOf(b).trim()) { goTo(b, true); return; }
+        if (!descOf(b).trim() && shown(b, i)) { goTo(b, true); return; }
       }
       o.toast('모든 덩어리에 설명이 있어요.');
     }
@@ -416,6 +427,14 @@
     /* ---------- 이벤트: 도구 막대 ---------- */
     el.next.addEventListener('click', nextEmpty);
     el.apply.addEventListener('click', apply);
+    function setLevel(n) {
+      maxLv = n;
+      Array.prototype.forEach.call(el.level.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(+x.dataset.lv === n)); });
+      o.store('noteLevel', n);
+      schedule(true);
+    }
+    el.level.addEventListener('click', function (e) { var x = e.target.closest('[data-lv]'); if (x) setLevel(+x.dataset.lv); });
+    setLevel(maxLv);
     el.fold.addEventListener('click', function () { setFold(!foldOn); o.toast(foldOn ? '쿼리 본문을 접었어요. 덩어리 첫 줄만 보여요.' : '모두 펼쳤어요.'); });
     el.fmt.addEventListener('change', function () { fmt = el.fmt.value; o.store('noteFmt', fmt); view().dispatch({ effects: setRefresh.of(true) }); schedule(); });
     el.findIn.addEventListener('keydown', function (e) {

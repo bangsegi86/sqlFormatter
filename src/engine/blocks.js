@@ -364,7 +364,7 @@
       if (b.kind === 'DECL') return '선언부 (' + (b.end - b.start + 1) + '줄)';
       if (b.kind === 'EXC') return 'EXCEPTION';
       var s = text.slice(code[b.t0].pos, lineEnd(b.start)).replace(/\s+/g, ' ').trim();
-      if (b.kind === 'SET' && b.count > 1) s += ' … (' + b.count + '줄)';
+      if (b.kind === 'SET' && b.count > 1) s += ' … 외 ' + (b.count - 1) + '개';
       return s;
     }
     walk(tree);

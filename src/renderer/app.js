@@ -105,11 +105,12 @@
   /* ---------- 구조 · 설명 화면 (notes.js) ---------- */
   var notes = window.SQLNotes.attach(out, {
     wrap: $('outwrap'), col: $('ncol'), map: $('nmap'), bar: $('notesbar'), drop: $('ndrop'), ghost: $('nghost'),
-    progBar: $('nProgBar'), progText: $('nProgText'), next: $('nNext'), findIn: $('nFind'), fold: $('nFold'), fmt: $('nFmt'), apply: $('nApply')
+    progBar: $('nProgBar'), progText: $('nProgText'), next: $('nNext'), findIn: $('nFind'), fold: $('nFold'), fmt: $('nFmt'), apply: $('nApply'), level: $('nLv')
   }, {
     toast: function (m, l, a) { toast(m, l, a); },
     store: function (k, v) { store.set(k, v); },
-    onScroll: function () { drawCrumb(); }
+    onScroll: function () { drawCrumb(); },
+    level: store.get('noteLevel', 0)
   });
   notes.setFmt(store.get('noteFmt', 'dash'));
   function setNotesMode(on, quiet) {

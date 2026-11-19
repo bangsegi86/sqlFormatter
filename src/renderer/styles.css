@@ -292,13 +292,13 @@ dialog input { width: 100%; height: 36px; }
 .nk.k-IF, .nk.k-CASE { color: #ffb38a; } .nk.k-LOOP { color: #c4a0ff; } .nk.k-TX { color: var(--ok); }
 .nk.k-SET, .nk.k-CALL, .nk.k-CTRL, .nk.k-CURSOR { color: var(--mute); } .nk.k-DECL, .nk.k-EXC, .nk.k-UNIT { color: var(--faint); }
 .nn { flex: 0 0 auto; font: 600 10.5px var(--mono); color: var(--faint); cursor: pointer; font-variant-numeric: tabular-nums; }
-.ni { flex: 1 1 auto; min-width: 0; height: calc(var(--nlh, 21px) - 3px); border: 1px solid transparent; border-radius: 4px; background: transparent; padding: 0 5px; font-size: 12px; color: var(--text); text-overflow: ellipsis; }
-.ni::placeholder { color: #55657a; }
-.nc.none .ni { border-color: #253140; border-style: dashed; }
+.nc .ni { flex: 1 1 auto; min-width: 0; height: calc(var(--nlh, 21px) - 2px); border: 1px solid transparent; border-radius: 4px; background: transparent; padding: 0 5px; font-size: 12px; color: var(--text); text-overflow: ellipsis; }
+.nc .ni::placeholder { color: #465568; }
+.nc:hover .ni::placeholder { color: #6b7b90; }
 .nc.pend .ni { color: #9cc3ff; }
 .nc.has .ni { color: #a9d8b6; }
-.ni:hover { border-color: var(--line2); }
-.ni:focus { border-color: var(--accent); border-style: solid; background: var(--panel2); color: var(--text); outline: none; }
+.nc .ni:hover { background: rgba(255, 255, 255, .03); }
+.nc .ni:focus { border-color: var(--accent); border-style: solid; background: var(--panel2); color: var(--text); outline: none; }
 .nm { flex: 0 0 auto; display: none; gap: 2px; }
 .nc:hover .nm, .nc:focus-within .nm { display: inline-flex; }
 .nb { width: 18px; height: 18px; padding: 0; border: 1px solid var(--line2); border-radius: 4px; background: #171e27; color: var(--mute); font-size: 10px; cursor: pointer; }
@@ -317,3 +317,11 @@ dialog input { width: 100%; height: 36px; }
 /* 코드 칸: 아직 넣지 않은 설명 미리보기 줄 · 바뀔 예전 설명 줄 */
 .cm-ghostnote { padding: 0 16px 0 4px; white-space: pre; color: #9cc3ff; font-style: italic; background: repeating-linear-gradient(90deg, rgba(156, 195, 255, .08) 0 6px, transparent 6px 12px); }
 .cm-line.cm-oldnote { text-decoration: line-through; opacity: .5; }
+.nc { border-left: 2px solid transparent; }
+.nc.has { border-left-color: rgba(91, 211, 138, .55); }
+.nc.pend { border-left-color: var(--accent); }
+.nlv { display: inline-flex; align-items: center; gap: 2px; }
+.nlvlab { font-size: 11px; color: var(--faint); margin-right: 4px; cursor: help; }
+.nlv button { min-width: 22px; height: 22px; padding: 0 5px; border: 1px solid var(--line2); border-radius: 4px; background: #171e27; color: var(--mute); font: 600 11px 'Segoe UI', sans-serif; cursor: pointer; }
+.nlv button:hover { border-color: var(--accent); color: var(--text); }
+.nlv button[aria-pressed="true"] { background: var(--chip); border-color: var(--accent); color: var(--text); }
