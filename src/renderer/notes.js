@@ -25,6 +25,7 @@
     IF: 'IF — IF ~ END IF 조건 분기 전체',
     CASE: 'CASE — CASE ~ END CASE 분기 전체',
     LOOP: 'LOOP — 반복문 전체 (FOR · WHILE · LOOP ~ END LOOP)',
+    DDL: 'DDL — 객체 생성 · 변경 문장 (CREATE TABLE · INDEX · VIEW, ALTER, COMMENT ON, GRANT, DROP …)',
     SQL: 'SQL — SQL 문장 하나 (SELECT INTO · INSERT · UPDATE · DELETE · MERGE · OPEN … FOR)',
     CURSOR: 'CURSOR — 커서 명령 (OPEN · FETCH · CLOSE)',
     SET: 'SET — 대입문 (:=). 빈 줄 없이 붙은 대입문은 한 덩어리로 묶어요',

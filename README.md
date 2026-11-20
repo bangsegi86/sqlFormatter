@@ -16,7 +16,7 @@
 
 ```
 npm install
-npm test          # 엔진 테스트 49개
+npm test          # 엔진 테스트 53개
 npm run build:editor  # 편집기(CodeMirror) 묶음 다시 만들기 — tools/editor-entry.js → src/vendor/codemirror.js (평소엔 필요 없어요)
 npm start         # 개발 모드로 바로 실행해 보기
 npm run dist      # 포터블 exe 만들기
@@ -52,7 +52,7 @@ npm run icon      # 아이콘 다시 만들기 (tools/make-icon.js → src/asset
 
 - **설명 칸이 덩어리 옆에 붙어요.** 결과 칸 왼쪽에 덩어리마다 한 줄짜리 설명 칸이 그 덩어리 첫 줄과 같은 높이에 있어요. 긴 쿼리를 지나는 동안엔 위에 고정돼요. 안쪽 덩어리는 `4.1` 처럼 번호가 붙고 한 칸씩 들여 보여요.
 - **덩어리**: SQL 문장, IF, CASE, 반복문, 안쪽 BEGIN~END, 커서 명령, COMMIT, 이어진 `:=` 대입문, 프로시저 호출, 선언부, EXCEPTION. 패키지 본문의 프로시저 · 함수도 각각 덩어리예요.
-  카드 앞의 종류 표시: `SQL` SQL 문장 · `IF` / `CASE` 분기 · `LOOP` 반복문 · `BLOCK` 안쪽 BEGIN~END · `DECL` 선언부 · `EXC` EXCEPTION · `CURSOR` OPEN/FETCH/CLOSE · `SET` 대입문(:=) · `CALL` 프로시저 호출 · `TX` COMMIT/ROLLBACK · `CTRL` RETURN/EXIT/RAISE/NULL · `PROC` 패키지 안 프로시저 · `전체` 프로시저 자체. 표시에 마우스를 올리면 뜻이 나와요.
+  카드 앞의 종류 표시: `SQL` SQL 문장 · `DDL` CREATE · ALTER · COMMENT ON 같은 객체 문장 · `IF` / `CASE` 분기 · `LOOP` 반복문 · `BLOCK` 안쪽 BEGIN~END · `DECL` 선언부 · `EXC` EXCEPTION · `CURSOR` OPEN/FETCH/CLOSE · `SET` 대입문(:=) · `CALL` 프로시저 호출 · `TX` COMMIT/ROLLBACK · `CTRL` RETURN/EXIT/RAISE/NULL · `PROC` 패키지 안 프로시저 · `전체` 프로시저 자체. 표시에 마우스를 올리면 뜻이 나와요.
 - **설명 넣기**: 입력한 설명은 코드에 흐린 미리보기 줄로 보이고, `주석으로 넣기` 를 누르면 덩어리 바로 위에 주석이 들어가요 (`-- [3] 설명` / `/* [3] 설명 */` / `-- 설명`). 알림의 `되돌리기` 나 `Ctrl+Z` 로 취소해요.
 - **다시 읽기**: 덩어리 바로 위 주석 한 줄은 그 덩어리의 설명으로 읽어요. 고치고 다시 넣으면 새로 추가하지 않고 그 줄을 바꾸고, 비우고 넣으면 지워요. 순서가 바뀌어 `[번호]` 가 안 맞으면 `번호 다시 매기기` 가 나와요.
 - **옮기기**: 카드의 `⠿` 를 끌거나 `↑` `↓` / `Alt+↑` `Alt+↓` 로 같은 단계 안에서 옮겨요. 덩어리 위 주석도 같이 움직여요. 다른 블록 안(다른 IF 가지 등)으로는 옮기지 않고, 선언부 · EXCEPTION 은 고정이에요. 값을 넣는 덩어리와 그 값을 쓰는 덩어리의 순서가 바뀌면 알림으로 알려줘요 (변수 이름으로만 판단해요).
@@ -93,7 +93,9 @@ npm run icon      # 아이콘 다시 만들기 (tools/make-icon.js → src/asset
   - 파라미터 · 변수 선언 · RECORD 필드 · 연속된 `:=` 대입문을 세로로 맞추고, 주석이 달린 프로시저 호출 인자는 한 줄에 하나씩 써요.
   - 해석하지 못한 문장은 그 문장만 원문 그대로 두고, 블록 짝(IF ~ END IF 등)이 맞지 않으면 블록 전체를 원문 그대로 두고 알려줘요.
 - 주석(`--`, `/* */`)과 힌트(`/*+ */`), 바인드 변수(`:name`), `q'[...]'` 문자열, 한글·따옴표 식별자를 보존해요.
-- 지원하지 않는 구문(CREATE TABLE 등 DDL, CREATE TYPE, COMPOUND TRIGGER, MODEL 절, 다중 테이블 INSERT)은 **원문 그대로 두고** 오류 위치를 알려줘요. 쿼리를 망가뜨리지 않는 것이 원칙이에요.
+- DDL(객체 생성 스크립트): `CREATE TABLE` (컬럼 한 줄에 하나 · 이름/타입 세로 정렬 · 제약 · 저장 속성 묶음마다 한 줄 · 파티션마다 한 줄 · `AS SELECT`), `CREATE INDEX`, `CREATE VIEW` · `MATERIALIZED VIEW` (SELECT 는 쿼리 옵션대로), `CREATE SEQUENCE` (옵션마다 한 줄), `SYNONYM`, `ALTER TABLE` (ADD · MODIFY 컬럼 목록, ADD CONSTRAINT), `COMMENT ON` (이어진 문장은 빈 줄 없이 붙이고 IS 위치를 맞춰요), `GRANT` · `REVOKE` · `DROP` · `TRUNCATE`
+  - DB 도구(SQL Developer · Toad 등)에서 복사한 스크립트처럼 앞뒤에 따옴표(`"`)가 붙어 있거나 `CREATE TABLE` 끝에 `;` 가 없어도 알아서 나눠 정리해요.
+- 지원하지 않는 구문(CREATE TYPE, COMPOUND TRIGGER, MODEL 절, 다중 테이블 INSERT 등)은 **원문 그대로 두고** 오류 위치를 알려줘요. 쿼리를 망가뜨리지 않는 것이 원칙이에요.
 - 한 문장이 해석 실패해도 같은 입력의 다른 문장은 정상적으로 정리해요.
 
 ## 알아둘 점

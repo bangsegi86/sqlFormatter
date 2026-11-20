@@ -7,6 +7,7 @@ require('./render.js');
 require('./transform.js');
 require('./alias.js');
 require('./plsql.js');
+require('./ddl.js');
 require('./format.js');
 require('./ifblocks.js');
 require('./blocks.js');

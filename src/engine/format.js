@@ -47,8 +47,13 @@
   function format(src, userOpts) {
     var o = normalizeOpts(userOpts);
     src = String(src == null ? '' : src);
-    var parsed = S.parse(src);
     var warnings = [];
+    // DB 도구에서 복사할 때 앞뒤에 붙는 따옴표(")는 빼요
+    if (S.ddl) {
+      var sq = S.ddl.stripWrapQuotes(src);
+      if (sq.removed) { src = sq.text; warnings.push('DB 도구에서 복사할 때 붙은 앞뒤 따옴표(")를 빼고 정리했어요.'); }
+    }
+    var parsed = S.parse(src);
     var errors = [];
     var blocks = [];
     var R = S.render;
@@ -79,6 +84,17 @@
             warnings.push('PL/SQL 블록 구조를 해석하지 못해 원문 그대로 두었어요 — ' + ln + '번째 줄' + near + ': ' + (e && e.message ? e.message : e));
           }
         }
+      } else if (!st.ast && S.ddl && S.ddl.isDdl(st.toks)) {
+        // CREATE TABLE · INDEX · VIEW · COMMENT ON … (ddl.js)
+        try {
+          lines = S.ddl.format(st, src, o);
+          st.err = null;
+          raw = false;
+          st.ddl = true;
+        } catch (e) {
+          st.err = null;
+          warnings.push(st.line + '번째 줄 ' + st.toks[0].v.toUpperCase() + ' 문장을 해석하지 못해 원문 그대로 두었어요' + (e && e.message ? ' (' + e.message + ')' : '') + '.');
+        }
       } else if (st.ast) {
         try {
           if (S.transform) S.transform.apply(parsed, st, idx, o, warnings);
@@ -107,17 +123,33 @@
         else if (o.term === 'semi' || !isLast) R.app(out, ';');
       }
       if (st.tail.length) out[out.length - 1] += ' ' + st.tail.map(R.cmtLine).join(' ');
-      blocks.push(out.join('\n'));
+      blocks.push({ text: out.join('\n'), cm: !raw && st.ddlComment && !st.lead.length && !st.tail.length ? st.ddlComment : null, term: out[out.length - 1] });
     });
 
-    if (parsed.tail.length) blocks.push(parsed.tail.map(R.cmtLine).join('\n'));
+    // 이어진 COMMENT ON 문장은 빈 줄 없이 붙이고 IS 위치를 맞춰요
+    for (var bi = 0; bi < blocks.length; bi++) {
+      if (!blocks[bi].cm) continue;
+      var bj = bi;
+      while (bj + 1 < blocks.length && blocks[bj + 1].cm) bj++;
+      var wmax = 0, k2;
+      for (k2 = bi; k2 <= bj; k2++) wmax = Math.max(wmax, blocks[k2].cm.head.length);
+      for (k2 = bi; k2 <= bj; k2++) {
+        var bk = blocks[k2], end = bk.text.slice(bk.cm.head.length + 1 + bk.cm.tail.length);
+        bk.text = bk.cm.head + R.sp(wmax - bk.cm.head.length + 1) + bk.cm.tail + end;
+        bk.tight = k2 > bi;
+      }
+      bi = bj;
+    }
+
+    if (parsed.tail.length) blocks.push({ text: parsed.tail.map(R.cmtLine).join('\n') });
     var lost = parsed.comments.filter(function (c) { return !c.used; });
     if (lost.length) {
       warnings.push('주석 ' + lost.length + '개의 위치를 정하지 못해 맨 아래로 옮겼어요.');
-      blocks.push(lost.map(R.cmtLine).join('\n'));
+      blocks.push({ text: lost.map(R.cmtLine).join('\n') });
     }
 
-    var text = blocks.join(new Array(o.stmtgap + 2).join('\n'))
+    var gap = new Array(o.stmtgap + 2).join('\n');
+    var text = blocks.map(function (b, i) { return (i ? (b.tight ? '\n' : gap) : '') + b.text; }).join('')
       .replace(new RegExp(R.SENT, 'g'), ' ')
       .split('\n').map(function (l) { return l.replace(/\s+$/, ''); }).join('\n');
     text = detab(text, o.tabsize);
@@ -144,7 +176,7 @@
         var u = v.toUpperCase();
         var next = toks[i + 1];
         var isFn = next && next.k === 'punct' && next.v === '(' && next.pos === t.end;
-        if (K.KW[u] || K.CONSTS[u] || (S.plsql && S.plsql.PLKW[u])) c = 'kw';
+        if (K.KW[u] || K.CONSTS[u] || (S.plsql && S.plsql.PLKW[u]) || (S.ddl && S.ddl.KW[u] && !isFn)) c = 'kw';
         else if (isFn && K.FUNCS[u]) c = 'fn';
       } else if (t.k === 'name') {
         var dot = v.indexOf('.');

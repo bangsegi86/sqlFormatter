@@ -7,7 +7,7 @@
   "author": "Oracle SQL Formatter",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/engine.test.js test/blocks.test.js",
+    "test": "node --test test/engine.test.js test/blocks.test.js test/ddl.test.js",
     "icon": "node tools/make-icon.js",
     "build:editor": "esbuild tools/editor-entry.js --bundle --format=iife --global-name=CM --minify --target=chrome120 --outfile=src/vendor/codemirror.js --banner:js=\"/* CodeMirror 6 - MIT License (c) Marijn Haverbeke and others - https://codemirror.net */\"",
     "dist": "electron-builder --win portable --x64"

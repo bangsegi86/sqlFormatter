@@ -252,24 +252,24 @@ test('종결 문자 옵션', () => {
 });
 
 test('해석 못 하는 문장은 원문을 지키고 오류를 알려준다', () => {
-  const r = S.format('select a from (select b from t\n;\ncreate table x (a number)');
+  const r = S.format('select a from (select b from t\n;\nexplain plan for x (a number)');
   assert.ok(r.errors.length >= 1);
-  assert.match(r.text, /create table x \(a number\)/);
+  assert.match(r.text, /explain plan for x \(a number\)/);
   const bad = S.format('select a from t where (a = 1');
   assert.equal(bad.errors.length, 1);
   assert.equal(bad.text, 'select a from t where (a = 1');
 });
 
 test('결과에 탭을 쓰지 않는다 (문자열 값 안의 탭만 그대로)', () => {
-  const src = "select a\t-- c\tx\nfrom t /*\tb\n\t\tc */ where s = 'x\ty';\nbegin\n\tnull;\t-- c\nend;\ncreate table x (a\tnumber);";
+  const src = "select a\t-- c\tx\nfrom t /*\tb\n\t\tc */ where s = 'x\ty';\nbegin\n\tnull;\t-- c\nend;\nexplain plan x (a\tnumber);";
   for (const o of [{}, { plmode: 'keep' }, { tabsize: 2 }]) {
     const r = S.format(src, o).text;
     assert.equal((r.match(/\t/g) || []).length, 1, r);
     assert.match(r, /'x\ty'/);
   }
   // 탭 간격 기준으로 바꿔서 원래 줄 맞춤을 지켜요
-  assert.match(S.format('create table x (a\tnumber,\n\tbb\tdate);').text, /\(a   number,\n    bb  date\);/);
-  assert.match(S.format('create table x (a\tnumber);', { tabsize: 8 }).text, /\(a       number\)/);
+  assert.match(S.format('explain plan x (a\tnumber,\n\tbb\tdate);').text, /\(a   number,\n    bb  date\);/);
+  assert.match(S.format('explain plan x (a\tnumber);', { tabsize: 8 }).text, /\(a       number\)/);
 });
 
 test('PL/SQL "원문 유지"면 블록을 그대로 둔다', () => {

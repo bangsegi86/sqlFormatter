@@ -8,7 +8,8 @@
   var S = (g.SQLF = g.SQLF || {});
 
   function mk(s) { var m = {}; s.split(/\s+/).forEach(function (w) { if (w) m[w] = true; }); return m; }
-  var SQLW = mk('SELECT WITH INSERT UPDATE DELETE MERGE EXECUTE LOCK FORALL CREATE ALTER DROP TRUNCATE GRANT REVOKE COMMENT');
+  var SQLW = mk('SELECT WITH INSERT UPDATE DELETE MERGE EXECUTE LOCK FORALL');
+  var DDLW = mk('CREATE ALTER DROP TRUNCATE GRANT REVOKE COMMENT RENAME');
   var CURW = mk('OPEN FETCH CLOSE');
   var TXW = mk('COMMIT ROLLBACK SAVEPOINT');
   var CTRLW = mk('RETURN EXIT CONTINUE RAISE NULL GOTO PIPE');
@@ -234,6 +235,7 @@
     function simple(i0, i) {
       var e = semi(i), t = code[i], w = W(t), kind;
       if (SQLW[w]) kind = 'SQL';
+      else if (DDLW[w]) kind = 'DDL';
       else if (CURW[w]) kind = w === 'OPEN' && findWord(i + 1, { FOR: 1 }, true) >= 0 ? 'SQL' : 'CURSOR';
       else if (TXW[w]) kind = 'TX';
       else if (CTRLW[w]) kind = 'CTRL';

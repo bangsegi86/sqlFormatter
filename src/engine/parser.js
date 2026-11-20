@@ -646,6 +646,15 @@
     return false;
   }
 
+  function newDdl(sig, i) {
+    var t = sig[i], p = sig[i - 1];
+    if (!t || t.k !== 'word' || !p) return false;
+    var u = t.v.toUpperCase(), pu = p.k === 'word' ? p.v.toUpperCase() : '';
+    if (pu === 'GRANT' || pu === 'REVOKE' || pu === 'ON' || (p.k === 'punct' && p.v === ',')) return false;
+    if (u === 'COMMENT') return !!sig[i + 1] && sig[i + 1].k === 'word' && sig[i + 1].v.toUpperCase() === 'ON';
+    return u === 'CREATE' || u === 'ALTER' || u === 'GRANT' || u === 'REVOKE' || u === 'DROP' || u === 'TRUNCATE';
+  }
+
   function parse(src) {
     var raw = S.tokenize(src);
     var at = attach(raw);
@@ -670,14 +679,20 @@
       var t = sig[i];
       return t.k === 'op' && t.v === '/' && t.nl && (i + 1 >= sig.length || sig[i + 1].nl);
     }
+    var depth = 0;
     for (var i = 0; i < sig.length; i++) {
       var t = sig[i];
       if (!cur.length) {
         if (isSlash(i)) continue;
         plsql = startsPlsql(sig, i);
+        depth = 0;
       }
       if (isSlash(i) && cur.length) { flush(null, true); continue; }
       if (!plsql && t.k === 'punct' && t.v === ';') { flush(t); continue; }
+      // ; 없이 이어 붙은 DDL (DB 도구에서 복사한 CREATE TABLE 뒤 COMMENT ON 등): 줄 맨 앞 DDL 단어에서 문장을 나눠요
+      if (!plsql && cur.length && depth === 0 && t.nl && newDdl(sig, i)) { flush(null); plsql = startsPlsql(sig, i); }
+      if (t.k === 'punct' && t.v === '(') depth++;
+      else if (t.k === 'punct' && t.v === ')') depth = Math.max(0, depth - 1);
       cur.push(t);
     }
     flush(null);
